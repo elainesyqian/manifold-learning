@@ -137,35 +137,46 @@ def radius_geometry(radius):
     )
 
 
-def knn_geometry():
-    return Geometry(adjacency_method="brute", adjacency_kwds={"n_neighbors": N_NEIGHBORS})
+def knn_geometry(k=N_NEIGHBORS):
+    return Geometry(adjacency_method="brute", adjacency_kwds={"n_neighbors": k})
 
 
-def embed_all(X, radius):
-    models = {
-        "Isomap": Isomap(n_components=2, geom=knn_geometry(), eigen_solver="dense"),
-        # lobpcg works on the symmetrised Laplacian; megaman's dense/arpack paths
-        # treat the (non-symmetric) geometric Laplacian as symmetric and return noise.
-        "Spectral Embedding": SpectralEmbedding(n_components=2, geom=radius_geometry(radius),
-                                                eigen_solver="lobpcg", random_state=0,
-                                                solver_kwds={"maxiter": 500}),
-        "LLE": LocallyLinearEmbedding(n_components=2, geom=knn_geometry(),
+def knn_models(k=N_NEIGHBORS):
+    """The three algorithms that only depend on the k-NN graph."""
+    return {
+        "Isomap": Isomap(n_components=2, geom=knn_geometry(k), eigen_solver="dense"),
+        "LLE": LocallyLinearEmbedding(n_components=2, geom=knn_geometry(k),
                                       eigen_solver="arpack"),
-        "LTSA": LTSA(n_components=2, geom=knn_geometry(), eigen_solver="arpack"),
+        "LTSA": LTSA(n_components=2, geom=knn_geometry(k), eigen_solver="arpack"),
     }
-    embeddings = {}
-    for name, model in models.items():
-        t = time.time()
-        try:
-            Y = model.fit_transform(X)
-        except ValueError:
-            # ARPACK can fail on a singular weight matrix (e.g. LTSA on GloVe)
-            print(f"  {name}: ARPACK failed, retrying with the dense solver")
-            model.eigen_solver = "dense"
-            Y = model.fit_transform(X)
-        embeddings[name] = np.asarray(Y, dtype=np.float64)
-        print(f"  {name:<20s} {time.time() - t:5.1f}s")
-    return embeddings
+
+
+def spectral_model(radius):
+    # lobpcg works on the symmetrised Laplacian; megaman's dense/arpack paths
+    # treat the (non-symmetric) geometric Laplacian as symmetric and return noise.
+    return SpectralEmbedding(n_components=2, geom=radius_geometry(radius),
+                             eigen_solver="lobpcg", random_state=0,
+                             solver_kwds={"maxiter": 500})
+
+
+def fit_embedding(name, model, X):
+    t = time.time()
+    try:
+        Y = model.fit_transform(X)
+    except ValueError:
+        # ARPACK can fail on a singular weight matrix (e.g. LTSA on GloVe)
+        print(f"  {name}: ARPACK failed, retrying with the dense solver")
+        model.eigen_solver = "dense"
+        Y = model.fit_transform(X)
+    print(f"  {name:<20s} {time.time() - t:5.1f}s")
+    return np.asarray(Y, dtype=np.float64)
+
+
+def embed_all(X, radius, k=N_NEIGHBORS):
+    knn = knn_models(k)
+    models = {"Isomap": knn["Isomap"], "Spectral Embedding": spectral_model(radius),
+              "LLE": knn["LLE"], "LTSA": knn["LTSA"]}
+    return {name: fit_embedding(name, model, X) for name, model in models.items()}
 
 
 def dual_metric(Y, laplacian):
@@ -322,7 +333,7 @@ def plot_distortion_map(X, spaces, metrics, map_2d, title, path):
     """Anisotropy and area scale at every point, drawn on the input map (2D data)
     or on each embedding (otherwise)."""
     names = list(metrics)
-    fig, axes = plt.subplots(2, len(names), figsize=(4.2 * len(names), 8.4))
+    fig, axes = plt.subplots(2, len(names), figsize=(4.2 * len(names), 8.4), squeeze=False)
     for col, name in enumerate(names):
         _, evals, _ = metrics[name]
         aniso = 0.5 * np.log10(evals[:, 1] / evals[:, 0])

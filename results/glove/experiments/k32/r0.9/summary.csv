@@ -1,0 +1,5 @@
+algorithm,median_stretch_ratio,p90_stretch_ratio,frac_ratio_over_2,area_scale_spread_p90_p10
+Isomap,1.428,2.238,0.136,2.107
+Spectral Embedding,1.464,2.17,0.1422,1.936
+LLE,1.091,1.309,0.0604,1.983
+LTSA,1.156,1.437,0.0024,1.649

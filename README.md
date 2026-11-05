@@ -45,6 +45,7 @@ manifold-learning/
 │   ├── run_africa_benchmark.py   megaman: 4 algorithms on the Africa dataset
 │   ├── run_bunny_benchmark.py    megaman: 4 algorithms on the Stanford Bunny
 │   ├── riemannian_metric.py      embeddings + dual Riemannian metric ellipses, all datasets
+│   ├── parameter_sweep.py        same, for k = 8/16/32 × three kernel radii per dataset
 │   └── megaman_smoke_test.py     minimal check that megaman is installed
 ├── glove/                        convert + load GloVe vectors (see glove/README.md)
 ├── notebooks/                    scikit-learn / UMAP warm-ups: swiss roll, s-curve, digits, iris
@@ -88,7 +89,11 @@ python scripts/run_africa_benchmark.py   # writes results/africa/
 python scripts/run_bunny_benchmark.py    # writes results/bunny/
 python scripts/riemannian_metric.py      # all datasets -> results/<dataset>/riemannian/ (~10 min)
 python scripts/riemannian_metric.py africa bunny   # or a subset
+python scripts/parameter_sweep.py        # k × r sweep -> results/<dataset>/experiments/
 ```
+
+Sweep results: every `(k, r)` setting and its figures are listed in the
+per-dataset tables linked from [results/README.md](results/README.md).
 
 ## Notes
 
