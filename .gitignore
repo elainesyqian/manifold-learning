@@ -1,0 +1,17 @@
+# Datasets (too large / not redistributed) — kept locally only
+data/
+
+# Proposal, progress doc, reference papers, shared figure collections
+private/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.obsidian/
+*.zip
