@@ -16,15 +16,26 @@ Guiding questions:
 
 ## Results so far
 
-**Africa (2D, 5,000 area-uniform points)** — colored by latitude
+Full write-ups, with every figure explained: **[docs/results/](docs/results/README.md)**
+([Africa](docs/results/africa.md) · [Americas](docs/results/americas.md) ·
+[Bunny](docs/results/bunny.md) · [GloVe](docs/results/glove.md))
 
-![Africa comparison](results/africa/comparison_all_4.png)
+**Embeddings.** Africa (2D, 5,000 area-uniform points), coloured by north–south position:
 
-**Stanford Bunny (3D surface, 5,000 points)** — colored by height
+![Africa embeddings](results/africa/riemannian/embeddings.png)
 
-![Bunny comparison](results/bunny/comparison_all_4.png)
+**Local distortion via the dual Riemannian metric.** Each ellipse shows how the
+embedding stretches (long axis) or shrinks (short axis) the data at that point. A
+circle means no distortion:
 
-Individual high-resolution plots for each algorithm are in [`results/`](results/).
+![Africa ellipses](results/africa/riemannian/ellipses.png)
+
+| Median stretch ratio (1.0 = shape preserved) | Africa | Americas | Bunny |
+|---|---:|---:|---:|
+| Isomap | **1.10** | 3.65 | **1.55** |
+| Spectral Embedding | 5.58 | 33.7 | 3.42 |
+| LLE | 8.21 | 118 | 2.98 |
+| LTSA | 4.07 (one global linear map) | **3.75** (global) | 2.88 |
 
 ## Repository layout
 
@@ -33,10 +44,12 @@ manifold-learning/
 ├── scripts/
 │   ├── run_africa_benchmark.py   megaman: 4 algorithms on the Africa dataset
 │   ├── run_bunny_benchmark.py    megaman: 4 algorithms on the Stanford Bunny
+│   ├── riemannian_metric.py      embeddings + dual Riemannian metric ellipses, all datasets
 │   └── megaman_smoke_test.py     minimal check that megaman is installed
 ├── glove/                        convert + load GloVe vectors (see glove/README.md)
 ├── notebooks/                    scikit-learn / UMAP warm-ups: swiss roll, s-curve, digits, iris
-├── results/                      generated figures (africa/, bunny/)
+├── results/                      generated figures and metric tables, per dataset
+├── docs/results/                 results write-ups (one page per dataset)
 ├── docs/notes/                   research notes (algorithm summaries, progress, open questions)
 ├── data/                         datasets — local only, not committed
 └── requirements.txt
@@ -52,7 +65,8 @@ pip install cython && pip install git+https://github.com/mmp2/megaman.git
 ```
 
 [megaman](https://github.com/mmp2/megaman) predates current NumPy/SciPy, so the
-benchmark scripts patch `np.float` and `scipy.linalg.solve(sym_pos=...)` at import time.
+scripts patch `np.float`, `scipy.linalg.solve(sym_pos=...)` and `scipy.linalg.eigh(eigvals=...)`
+at import time (tested with Python 3.11, NumPy 2.4, SciPy 1.17).
 
 ## Data
 
@@ -72,6 +86,8 @@ From the repository root:
 ```bash
 python scripts/run_africa_benchmark.py   # writes results/africa/
 python scripts/run_bunny_benchmark.py    # writes results/bunny/
+python scripts/riemannian_metric.py      # all datasets -> results/<dataset>/riemannian/ (~10 min)
+python scripts/riemannian_metric.py africa bunny   # or a subset
 ```
 
 ## Notes
